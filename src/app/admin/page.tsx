@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/common/Navbar";
+import ServiceIcon from "@/components/common/ServiceIcon";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { useBooking } from "@/context/booking/BookingProvider";
+import { useLang } from "@/context/lang/LangProvider";
 import {
   SERVICES, STATUS_COLOR, STATUS_LABEL, TIME_SLOTS,
   type Booking, type BookingStatus,
@@ -17,6 +19,7 @@ const ALL_STATUSES: BookingStatus[] = ["pending", "confirmed", "in-progress", "c
 export default function AdminPage() {
   const { user, isLoading } = useAuth();
   const { bookings, updateStatus } = useBooking();
+  const { t } = useLang();
   const router = useRouter();
   const [filter, setFilter] = useState<BookingStatus | "all">("all");
   const [dateFilter, setDateFilter] = useState("");
@@ -39,10 +42,10 @@ export default function AdminPage() {
     .reduce((s: number, b: Booking) => s + b.total, 0);
 
   const stats = [
-    { label: "Total Bookings", value: bookings.length,                                                                icon: CalendarDays, color: "text-brand-600" },
-    { label: "Pending",        value: bookings.filter((b: Booking) => b.status === "pending").length,                icon: Clock,        color: "text-amber-500" },
-    { label: "Confirmed",      value: bookings.filter((b: Booking) => b.status === "confirmed").length,              icon: CheckCircle,  color: "text-blue-500"  },
-    { label: "Revenue",        value: `$${revenue}`,                                                                 icon: Users,        color: "text-green-600" },
+    { label: t.totalAdminBookings, value: bookings.length, icon: CalendarDays, color: "text-brand-600" },
+    { label: t.pending, value: bookings.filter((b: Booking) => b.status === "pending").length, icon: Clock, color: "text-amber-500" },
+    { label: t.confirmed, value: bookings.filter((b: Booking) => b.status === "confirmed").length, icon: CheckCircle, color: "text-blue-500" },
+    { label: t.revenue, value: `$${revenue}`, icon: Users, color: "text-green-600" },
   ];
 
   const todayStr = dayjs().format("YYYY-MM-DD");
@@ -55,11 +58,11 @@ export default function AdminPage() {
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800">Admin Dashboard</h1>
-            <p className="text-slate-500 mt-1">Manage all AC cleaning bookings</p>
+            <h1 className="text-3xl font-bold text-slate-800">{t.adminDashboard}</h1>
+            <p className="text-slate-500 mt-1">{t.adminDesc}</p>
           </div>
           <Link href="/book" className="bg-brand-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-brand-700 transition-colors">
-            + New Booking
+            {t.newBooking}
           </Link>
         </div>
 
@@ -84,14 +87,14 @@ export default function AdminPage() {
                 filter === s ? "bg-brand-600 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-brand-300"
               }`}>
               {s === "all"
-                ? `All (${bookings.length})`
+                ? `${t.all} (${bookings.length})`
                 : `${STATUS_LABEL[s as BookingStatus]} (${bookings.filter((b: Booking) => b.status === s).length})`}
             </button>
           ))}
           <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}
             className="border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white" />
           {dateFilter && (
-            <button onClick={() => setDateFilter("")} className="text-sm text-slate-400 hover:text-slate-600 px-2">Clear ×</button>
+            <button onClick={() => setDateFilter("")} className="text-sm text-slate-400 hover:text-slate-600 px-2">{t.clear}</button>
           )}
         </div>
 
@@ -99,14 +102,14 @@ export default function AdminPage() {
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm mb-8">
           {filtered.length === 0 ? (
             <div className="text-center py-16 text-slate-400">
-              <p className="text-4xl mb-3">📋</p><p>No bookings match this filter</p>
+              <p>{t.noBookingsMatch}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
                   <tr className="text-xs text-slate-500 uppercase tracking-wider">
-                    {["Ref", "Customer", "Service", "Units", "Date", "Time", "Total", "Status", "Actions"].map((h) => (
+                    {[t.ref, t.customer, t.service, t.units, t.date, t.time, t.total, t.status, t.actions].map((h) => (
                       <th key={h} className="text-left px-4 py-3 font-semibold whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -122,7 +125,12 @@ export default function AdminPage() {
                           <p className="text-xs text-slate-400">{b.userEmail}</p>
                           {b.userPhone && <p className="text-xs text-slate-400">{b.userPhone}</p>}
                         </td>
-                        <td className="px-4 py-3 whitespace-nowrap">{svc?.icon} {svc?.name}</td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-2">
+                            <ServiceIcon id={b.service} className="w-4 h-4 text-brand-600" />
+                            {svc?.name}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 text-center">{b.units}</td>
                         <td className="px-4 py-3 whitespace-nowrap">{dayjs(b.date).format("D MMM YYYY")}</td>
                         <td className="px-4 py-3">{b.timeSlot}</td>
@@ -138,14 +146,14 @@ export default function AdminPage() {
                               onClick={() => setOpenMenu(openMenu === b.id ? null : b.id)}
                               className="flex items-center gap-1 px-3 py-1.5 border border-slate-200 rounded-lg text-xs font-medium text-slate-600 hover:border-brand-300 hover:text-brand-600 transition-colors"
                             >
-                              Update <ChevronDown className="w-3 h-3" />
+                              {t.update} <ChevronDown className="w-3 h-3" />
                             </button>
                             {openMenu === b.id && (
                               <div className="absolute right-0 top-8 z-20 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[150px] animate-fade-in">
                                 {ALL_STATUSES.filter((s) => s !== b.status).map((s) => (
                                   <button key={s} onClick={() => { updateStatus(b.id, s); setOpenMenu(null); }}
                                     className="w-full text-left px-4 py-2 text-sm hover:bg-brand-50 hover:text-brand-700 transition-colors capitalize">
-                                    → {STATUS_LABEL[s]}
+                                    {STATUS_LABEL[s]}
                                   </button>
                                 ))}
                               </div>
@@ -163,10 +171,10 @@ export default function AdminPage() {
 
         {/* Today's Queue */}
         <div>
-          <h2 className="text-xl font-bold text-slate-800 mb-4">📅 Today&apos;s Queue</h2>
+          <h2 className="text-xl font-bold text-slate-800 mb-4">{t.todaysQueue}</h2>
           {todayBookings.length === 0 ? (
             <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-slate-400">
-              <p className="text-3xl mb-2">🗓️</p><p>No bookings scheduled for today</p>
+              <p>{t.noBookingsToday}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
@@ -174,16 +182,19 @@ export default function AdminPage() {
                 const slotBookings = todayBookings.filter((b: Booking) => b.timeSlot === slot);
                 return (
                   <div key={slot} className={`bg-white border rounded-xl p-3 ${slotBookings.length > 0 ? "border-brand-300 shadow-sm" : "border-slate-200"}`}>
-                    <p className="text-xs font-bold text-slate-600 mb-2">🕐 {slot}</p>
+                    <p className="text-xs font-bold text-slate-600 mb-2">{slot}</p>
                     {slotBookings.length === 0 ? (
-                      <p className="text-xs text-slate-300">Free</p>
+                      <p className="text-xs text-slate-300">{t.free}</p>
                     ) : (
                       slotBookings.map((b: Booking) => {
                         const svc = SERVICES.find((s) => s.id === b.service);
                         return (
                           <div key={b.id} className="text-xs space-y-0.5">
                             <p className="font-semibold text-slate-800 truncate">{b.userName}</p>
-                            <p className="text-slate-500">{svc?.icon} {svc?.name}</p>
+                            <p className="text-slate-500 inline-flex items-center gap-1">
+                              <ServiceIcon id={b.service} className="w-3 h-3" />
+                              {svc?.name}
+                            </p>
                             <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-medium ${STATUS_COLOR[b.status]}`}>
                               {STATUS_LABEL[b.status]}
                             </span>
