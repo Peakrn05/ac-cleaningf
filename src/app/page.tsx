@@ -37,6 +37,41 @@ const PROMOS = [
   { label: "Weekend Special", desc: "Free filter check add-on", color: "bg-green-600" },
 ];
 
+const AC_TYPES = ["All Types", "Split AC", "Cassette AC", "Central AC"] as const;
+
+const PRICE_RANGES = [
+  { id: "under-40", label: "Under $40", match: (price: number) => price < 40 },
+  { id: "40-70", label: "$40-$70", match: (price: number) => price >= 40 && price <= 70 },
+  { id: "70-100", label: "$70-$100", match: (price: number) => price >= 70 && price <= 100 },
+  { id: "over-100", label: "Over $100", match: (price: number) => price > 100 },
+] as const;
+
+const RATING_FILTERS = ["4.5+", "4.0+", "3.5+"] as const;
+
+type AcType = (typeof AC_TYPES)[number];
+type PriceRangeId = (typeof PRICE_RANGES)[number]["id"];
+type RatingFilter = (typeof RATING_FILTERS)[number] | "";
+
+interface Filters {
+  acType: AcType;
+  priceRanges: PriceRangeId[];
+  minRating: RatingFilter;
+}
+
+const DEFAULT_FILTERS: Filters = {
+  acType: "All Types",
+  priceRanges: [],
+  minRating: "",
+};
+
+function matchesAcType(serviceId: string, acType: AcType) {
+  if (acType === "All Types") return true;
+  if (acType === "Split AC") return serviceId.startsWith("split-");
+  if (acType === "Cassette AC") return serviceId === "cassette";
+  if (acType === "Central AC") return serviceId === "central";
+  return true;
+}
+
 function StarRow({ stars, count }: { stars: number; count: number }) {
   return (
     <div className="flex items-center gap-1">
@@ -51,6 +86,40 @@ function StarRow({ stars, count }: { stars: number; count: number }) {
 }
 
 export default function LandingPage() {
+  const [draftFilters, setDraftFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState<Filters>(DEFAULT_FILTERS);
+
+  const filteredServices = useMemo(() => {
+    return SERVICES.filter((service) => {
+      if (!matchesAcType(service.id, appliedFilters.acType)) return false;
+
+      if (appliedFilters.priceRanges.length > 0) {
+        const inSelectedRange = PRICE_RANGES.some(
+          (range) => appliedFilters.priceRanges.includes(range.id) && range.match(service.price)
+        );
+        if (!inSelectedRange) return false;
+      }
+
+      if (appliedFilters.minRating) {
+        const min = Number(appliedFilters.minRating.replace("+", ""));
+        if ((RATING_MAP[service.id]?.stars ?? 0) < min) return false;
+      }
+
+      return true;
+    });
+  }, [appliedFilters]);
+
+  const togglePriceRange = (rangeId: PriceRangeId) => {
+    setDraftFilters((filters) => ({
+      ...filters,
+      priceRanges: filters.priceRanges.includes(rangeId)
+        ? filters.priceRanges.filter((id) => id !== rangeId)
+        : [...filters.priceRanges, rangeId],
+    }));
+  };
+
+  const applyFilters = () => setAppliedFilters(draftFilters);
+
   return (
     <div className="min-h-screen bg-slate-100">
       <Navbar />
@@ -128,9 +197,15 @@ export default function LandingPage() {
 
               <div className="mb-4">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">AC Type</p>
-                {["Split AC", "Cassette AC", "Central AC", "All Types"].map((t) => (
+                {AC_TYPES.map((t) => (
                   <label key={t} className="flex items-center gap-2 py-1 cursor-pointer">
-                    <input type="radio" name="type" className="accent-brand-600" defaultChecked={t === "All Types"} />
+                    <input
+                      type="radio"
+                      name="type"
+                      className="accent-brand-600"
+                      checked={draftFilters.acType === t}
+                      onChange={() => setDraftFilters((filters) => ({ ...filters, acType: t }))}
+                    />
                     <span className="text-sm text-slate-700">{t}</span>
                   </label>
                 ))}
