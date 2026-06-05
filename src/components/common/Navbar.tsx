@@ -3,75 +3,133 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/context/auth/AuthProvider";
-import { Wind, Menu, X } from "lucide-react";
+import { useLang } from "@/context/lang/LangProvider";
+import { Menu, X, Search, User, ShoppingBag } from "lucide-react";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { t, lang, toggle } = useLang();
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
 
   const handleLogout = () => { logout(); router.push("/"); };
 
-  const links = [
-    { href: "/", label: "Home" },
-    { href: "/book", label: "Book Now" },
-    ...(user ? [{ href: "/dashboard", label: "My Bookings" }] : []),
-    ...(user?.role === "admin" ? [{ href: "/admin", label: "Admin" }] : []),
+  const navLinks = [
+    { href: "/",         label: t.home },
+    { href: "/book",     label: t.bookService },
+    ...(user ? [{ href: "/dashboard", label: t.myBookings }] : []),
+    ...(user?.role === "admin" ? [{ href: "/admin", label: t.admin }] : []),
   ];
 
-  const NavLink = ({ href, label }: { href: string; label: string }) => (
-    <Link href={href} onClick={() => setOpen(false)}
-      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-        pathname === href ? "bg-brand-50 text-brand-600" : "text-slate-600 hover:text-brand-600 hover:bg-brand-50"
-      }`}>
-      {label}
-    </Link>
-  );
-
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
-      <div className="max-w-6xl mx-auto px-4 flex items-center justify-between h-16">
-        <Link href="/" className="flex items-center gap-2 text-brand-600 font-bold text-lg">
-          <Wind className="w-6 h-6" /> AirCare Pro
-        </Link>
-        <div className="hidden md:flex items-center gap-1">
-          {links.map((l) => <NavLink key={l.href} {...l} />)}
-        </div>
-        <div className="hidden md:flex items-center gap-2">
-          {user ? (
-            <>
-              <span className="text-sm text-slate-500">Hi, {user.name.split(" ")[0]}</span>
-              <button onClick={handleLogout} className="text-sm px-4 py-2 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 transition-colors">
-                Sign Out
-              </button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" className="text-sm px-4 py-2 text-slate-600 hover:text-brand-600 transition-colors">Sign In</Link>
-              <Link href="/register" className="text-sm px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">Register</Link>
-            </>
-          )}
-        </div>
-        <button onClick={() => setOpen(!open)} className="md:hidden p-2 rounded-lg hover:bg-slate-100">
-          {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
-      </div>
-      {open && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1 animate-fade-in">
-          {links.map((l) => <NavLink key={l.href} {...l} />)}
-          <div className="border-t border-slate-100 pt-2 mt-2 flex gap-2">
+    <header className="sticky top-0 z-50 shadow-md">
+      {/* Top orange bar */}
+      <div className="bg-brand-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 flex items-center gap-3 h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 shrink-0">
+            <div className="bg-white text-brand-600 rounded-lg w-9 h-9 flex items-center justify-center font-black text-lg">❄</div>
+            <div className="hidden sm:block">
+              <p className="font-black text-white text-base leading-tight">AirCare Pro</p>
+              <p className="text-brand-200 text-[10px] leading-tight">AC Cleaning Service</p>
+            </div>
+          </Link>
+
+          {/* Search */}
+          <div className="flex-1 max-w-xl mx-auto hidden sm:flex relative">
+            <input value={search} onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && router.push("/book")}
+              placeholder={t.searchPlaceholder}
+              className="w-full pl-4 pr-12 py-2.5 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-brand-200" />
+            <button onClick={() => router.push("/book")}
+              className="absolute right-0 top-0 bottom-0 px-4 bg-brand-700 hover:bg-brand-800 text-white rounded-r-xl flex items-center transition-colors">
+              <Search className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Right: lang toggle + auth */}
+          <div className="flex items-center gap-2 ml-auto sm:ml-0">
+            {/* Language toggle */}
+            <button onClick={toggle}
+              className="flex items-center gap-1 bg-white/20 hover:bg-white/30 transition-colors px-3 py-1.5 rounded-lg text-xs font-bold text-white border border-white/30">
+              {lang === "en" ? (
+                <><span className="text-base leading-none">🇹🇭</span> ภาษาไทย</>
+              ) : (
+                <><span className="text-base leading-none">🇬🇧</span> English</>
+              )}
+            </button>
+
             {user ? (
-              <button onClick={() => { handleLogout(); setOpen(false); }} className="w-full py-2 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50">Sign Out</button>
+              <>
+                <Link href="/dashboard" className="flex items-center gap-1 text-sm text-white hover:text-brand-100 px-2 py-1">
+                  <User className="w-4 h-4" />
+                  <span className="hidden md:inline">{user.name.split(" ")[0]}</span>
+                </Link>
+                <button onClick={handleLogout}
+                  className="hidden md:block text-xs bg-white/20 hover:bg-white/30 text-white px-3 py-1.5 rounded-lg transition-colors">
+                  {t.signOut}
+                </button>
+              </>
             ) : (
               <>
-                <Link href="/login" onClick={() => setOpen(false)} className="flex-1 text-center py-2 text-sm border border-slate-300 rounded-lg text-slate-600">Sign In</Link>
-                <Link href="/register" onClick={() => setOpen(false)} className="flex-1 text-center py-2 text-sm bg-brand-600 text-white rounded-lg">Register</Link>
+                <Link href="/login" className="text-sm text-white hover:text-brand-100 transition-colors px-2 hidden sm:block">
+                  {t.signIn}
+                </Link>
+                <Link href="/register"
+                  className="text-sm bg-white text-brand-600 font-bold px-4 py-1.5 rounded-lg hover:bg-brand-50 transition-colors">
+                  {t.register}
+                </Link>
               </>
+            )}
+            <Link href="/book" className="text-white"><ShoppingBag className="w-5 h-5" /></Link>
+            <button onClick={() => setOpen(!open)} className="sm:hidden p-1.5 rounded-lg hover:bg-white/20">
+              {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Category nav strip */}
+      <div className="bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 flex gap-1 overflow-x-auto scrollbar-hide">
+          {navLinks.map((l) => (
+            <Link key={l.href} href={l.href}
+              className={`shrink-0 px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${
+                pathname === l.href
+                  ? "border-brand-600 text-brand-600"
+                  : "border-transparent text-slate-600 hover:text-brand-600 hover:border-brand-300"
+              }`}>
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile dropdown */}
+      {open && (
+        <div className="sm:hidden bg-white border-b border-slate-200 px-4 py-3 space-y-3 animate-fade-in">
+          <div className="relative">
+            <input placeholder={t.searchPlaceholder} value={search} onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-4 pr-10 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+          </div>
+          <div className="flex gap-2">
+            {!user && (
+              <>
+                <Link href="/login" onClick={() => setOpen(false)} className="flex-1 text-center py-2 text-sm border border-slate-300 rounded-lg text-slate-600">{t.signIn}</Link>
+                <Link href="/register" onClick={() => setOpen(false)} className="flex-1 text-center py-2 text-sm bg-brand-600 text-white rounded-lg">{t.register}</Link>
+              </>
+            )}
+            {user && (
+              <button onClick={() => { handleLogout(); setOpen(false); }} className="w-full text-sm text-red-500 border border-red-200 py-2 rounded-lg">
+                {t.signOut}
+              </button>
             )}
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 }

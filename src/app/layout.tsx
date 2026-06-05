@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/auth/AuthProvider";
 import { BookingProvider } from "@/context/booking/BookingProvider";
+import { LangProvider } from "@/context/lang/LangProvider";
 
 export const metadata: Metadata = {
   title: "AirCare Pro — AC Cleaning & Service",
@@ -12,9 +13,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
-          <BookingProvider>{children}</BookingProvider>
-        </AuthProvider>
+        <LangProvider>
+          <AuthProvider>
+            <BookingProvider>{children}</BookingProvider>
+          </AuthProvider>
+        </LangProvider>
       </body>
     </html>
   );

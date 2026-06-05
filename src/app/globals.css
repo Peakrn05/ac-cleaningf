@@ -3,6 +3,25 @@
 @tailwind utilities;
 
 * { box-sizing: border-box; }
-body { background: #f8fafc; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-::-webkit-scrollbar { width: 5px; }
+
+body {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-family: "Times New Roman", Times, serif;
+}
+
+/* Keep UI controls in system sans-serif for readability */
+input, select, textarea, button {
+  font-family: "Times New Roman", Times, serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Times New Roman", Times, serif;
+  font-weight: 700;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
