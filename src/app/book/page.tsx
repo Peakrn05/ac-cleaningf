@@ -293,9 +293,9 @@ export default function BookPage() {
                     placeholder={t.addressPlaceholder} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">{t.notes}</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">{t.notes}</label> 
                   <textarea value={form.notes} onChange={(e)=>set("notes",e.target.value)} rows={2}
-                    className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none"
+                    className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 resize-none break-all" 
                     placeholder={t.notesPlaceholder} />
                 </div>
               </div>
