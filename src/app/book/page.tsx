@@ -3,18 +3,19 @@ import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/common/Navbar";
 import PhoneInput from "@/components/common/PhoneInput";
+import ServiceIcon from "@/components/common/ServiceIcon";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { useBooking } from "@/context/booking/BookingProvider";
 import { useLang, validateEmail } from "@/context/lang/LangProvider";
-import { SERVICES, TIME_SLOTS, type ServiceId } from "@/types/app/booking";
-import { CheckCircle, ChevronRight, ChevronLeft, Lock, CreditCard } from "lucide-react";
+import { calculateBookingTotal, getBtuMultiplier, SERVICES, TIME_SLOTS, type ServiceId } from "@/types/app/booking";
+import { Banknote, CheckCircle, ChevronRight, ChevronLeft, Lock, CreditCard, User, Wallet } from "lucide-react";
 import dayjs from "dayjs";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 type PayMethod = "paypal" | "credit" | "debit";
 
 interface FormState {
-  service: ServiceId | ""; units: number; date: string; timeSlot: string;
+  service: ServiceId | ""; units: number; btu: number; date: string; timeSlot: string;
   name: string; email: string; phone: string; address: string; notes: string;
 }
 interface CardState { number: string; holder: string; expiry: string; cvv: string; }
@@ -33,7 +34,7 @@ export default function BookPage() {
 
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState<FormState>({
-    service: "", units: 1, date: "", timeSlot: "",
+    service: "", units: 1, btu: 5000, date: "", timeSlot: "",
     name: user?.name ?? "", email: user?.email ?? "",
     phone: user?.phone ?? "", address: "", notes: "",
   });
@@ -49,7 +50,7 @@ export default function BookPage() {
   const setC = (k: keyof CardState, v: string) => setCard((c) => ({ ...c, [k]: v }));
 
   const svc = SERVICES.find((s) => s.id === form.service);
-  const total = svc ? svc.price * form.units : 0;
+  const total = svc ? calculateBookingTotal(svc.price, form.units, form.btu) : 0;
   const cardBrand = getCardBrand(card.number);
 
   const validateStep3 = () => {
@@ -78,7 +79,7 @@ export default function BookPage() {
     const b = addBooking({
       userId: user?.id ?? "guest",
       userName: form.name, userEmail: form.email, userPhone: form.phone,
-      service: form.service as ServiceId, units: form.units,
+      service: form.service as ServiceId, units: form.units, btu: form.btu,
       date: form.date, timeSlot: form.timeSlot,
       address: form.address, notes: form.notes,
       status: "confirmed", total,
@@ -103,7 +104,7 @@ export default function BookPage() {
 
   const STEPS = [t.service, t.schedule, t.details, t.review, t.payment];
 
-  /* ── Success ── */
+  /* Success */
   if (confirmed) return (
     <div className="min-h-screen bg-slate-100"><Navbar />
       <div className="max-w-lg mx-auto px-4 py-16 text-center animate-fade-in">
@@ -114,7 +115,7 @@ export default function BookPage() {
         <p className="text-slate-500 mb-1">Ref: <span className="font-mono font-bold text-brand-600">#{bookingId.slice(0,8).toUpperCase()}</span></p>
         <p className="text-slate-500 mb-8">{svc?.name} · {dayjs(form.date).format("ddd D MMM")} {form.timeSlot}</p>
         <div className="bg-white border border-slate-200 rounded-2xl p-6 text-left mb-6 text-sm">
-          {[["Service",`${svc?.icon} ${svc?.name}`],["Units",String(form.units)],["Date",dayjs(form.date).format("dddd, D MMMM YYYY")],["Time",form.timeSlot],["Address",form.address]].map(([k,v])=>(
+          {[[t.service, svc?.name ?? ""], [t.units, String(form.units)], [t.btuCapacity, `${form.btu.toLocaleString()} BTU`], [t.date, dayjs(form.date).format("dddd, D MMMM YYYY")], [t.time, form.timeSlot], [t.address, form.address]].map(([k,v])=>(
             <div key={k} className="flex justify-between py-2.5 border-b border-slate-100 last:border-0">
               <span className="text-slate-500">{k}</span><span className="font-medium text-right ml-4">{v}</span>
             </div>
@@ -136,7 +137,7 @@ export default function BookPage() {
     </div>
   );
 
-  /* ── Main wizard ── */
+  /* Main wizard */
   return (
     <div className="min-h-screen bg-slate-100"><Navbar />
       <div className="max-w-2xl mx-auto px-4 py-10">
@@ -174,13 +175,15 @@ export default function BookPage() {
                   <button key={s.id} onClick={()=>set("service",s.id)}
                     className={`text-left p-4 rounded-xl border-2 transition-all ${form.service===s.id?"border-brand-500 bg-brand-50":"border-slate-200 hover:border-brand-300"}`}>
                     <div className="flex items-start gap-3">
-                      <span className="text-2xl">{s.icon}</span>
+                      <span className="w-10 h-10 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                        <ServiceIcon id={s.id} className="w-5 h-5" />
+                      </span>
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-slate-800 text-sm">{s.name}</p>
                         <p className="text-xs text-slate-500 mt-0.5">{s.desc}</p>
                         <div className="flex justify-between mt-2">
                           <span className="text-brand-600 font-bold text-sm">${s.price}<span className="text-xs font-normal text-slate-400">{s.priceUnit}</span></span>
-                          <span className="text-xs text-slate-400">⏱ {s.duration}</span>
+                          <span className="text-xs text-slate-400">{s.duration}</span>
                         </div>
                       </div>
                     </div>
@@ -194,7 +197,22 @@ export default function BookPage() {
                     <button onClick={()=>set("units",Math.max(1,form.units-1))} className="w-10 h-10 rounded-xl bg-white border border-slate-300 text-xl font-bold hover:bg-slate-50 flex items-center justify-center">−</button>
                     <span className="text-2xl font-bold w-8 text-center">{form.units}</span>
                     <button onClick={()=>set("units",Math.min(10,form.units+1))} className="w-10 h-10 rounded-xl bg-white border border-slate-300 text-xl font-bold hover:bg-slate-50 flex items-center justify-center">+</button>
-                    <span className="text-slate-500 text-sm ml-2">Total: <strong className="text-brand-600">${svc?svc.price*form.units:0}</strong></span>
+                    <span className="text-slate-500 text-sm ml-2">Total: <strong className="text-brand-600">${total}</strong></span>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">{t.btuCapacity}</label>
+                    <select
+                      value={form.btu}
+                      onChange={(e)=>set("btu", Number(e.target.value))}
+                      className="w-full border border-slate-300 rounded-xl px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-500"
+                    >
+                      <option value={4500}>{t.btuSmall}</option>
+                      <option value={9000}>{t.btuMedium}</option>
+                      <option value={18000}>{t.btuLarge}</option>
+                      <option value={30000}>{t.btuXLarge}</option>
+                    </select>
+                    <p className="text-xs text-slate-500 mt-1">{t.btuHelp}</p>
+                    <p className="text-xs text-brand-700 mt-1">{t.sizeSurcharge}: {Math.round((getBtuMultiplier(form.btu) - 1) * 100)}%</p>
                   </div>
                 </div>
               )}
@@ -207,14 +225,14 @@ export default function BookPage() {
               <h2 className="text-xl font-bold text-slate-800 mb-4">{t.chooseDateTime}</h2>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">📅 {t.preferredDate}</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">{t.preferredDate}</label>
                   <input type="date" min={today} max={maxDate} value={form.date}
                     onChange={(e)=>{set("date",e.target.value);set("timeSlot","");}}
                     className="border border-slate-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
                   {form.date && <p className="text-xs text-slate-500 mt-1">{dayjs(form.date).format("dddd, MMMM D, YYYY")}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">🕐 {t.timeSlot}</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">{t.timeSlot}</label>
                   <div className="grid grid-cols-4 gap-2">
                     {TIME_SLOTS.map((slot)=>(
                       <button key={slot} onClick={()=>set("timeSlot",slot)}
@@ -236,7 +254,7 @@ export default function BookPage() {
               {/* Guest mode notice */}
               {!user && (
                 <div className="bg-sky-50 border border-sky-200 rounded-xl p-4 mb-5 text-sm text-sky-800 flex items-start gap-2">
-                  <span className="text-lg leading-none">👤</span>
+                  <User className="w-4 h-4 mt-0.5 shrink-0" />
                   <p>{t.guestNote}<Link href="/register" className="font-bold underline">{t.guestNoteLink}</Link>{t.guestNoteEnd}</p>
                 </div>
               )}
@@ -289,7 +307,7 @@ export default function BookPage() {
             <div>
               <h2 className="text-xl font-bold text-slate-800 mb-4">{t.reviewOrder}</h2>
               <div className="space-y-0.5">
-                {[["Service",`${svc?.icon} ${svc?.name}`],["Units",String(form.units)],["Date",dayjs(form.date).format("dddd, D MMMM YYYY")],["Time",form.timeSlot],
+                {[[t.service, svc?.name ?? ""], [t.units, String(form.units)], [t.btuCapacity, `${form.btu.toLocaleString()} BTU`], [t.date, dayjs(form.date).format("dddd, D MMMM YYYY")], [t.time, form.timeSlot],
                   ["Name",form.name],["Email",form.email],["Phone",form.phone||"—"],["Address",form.address],
                   ...(form.notes?[["Notes",form.notes]]:[])].map(([k,v])=>(
                   <div key={k} className="flex justify-between py-2.5 border-b border-slate-100 text-sm">
@@ -304,7 +322,7 @@ export default function BookPage() {
               {/* Guest mode — no block, just info */}
               {!user && (
                 <div className="mt-4 p-3 bg-sky-50 border border-sky-200 rounded-xl text-sm text-sky-800 flex items-center gap-2">
-                  <span>👤</span>
+                  <User className="w-4 h-4 shrink-0" />
                   <span>{t.continueAsGuest} · <Link href="/login" className="font-bold underline">{t.signIn}</Link></span>
                 </div>
               )}
@@ -324,19 +342,23 @@ export default function BookPage() {
               {/* Summary pill */}
               <div className="bg-brand-50 border border-brand-100 rounded-xl px-5 py-3 mb-5 flex items-center justify-between">
                 <div className="text-sm text-slate-600">
-                  <span className="font-semibold">{svc?.icon} {svc?.name}</span>
-                  <span className="mx-2 text-slate-400">·</span>{form.units} unit{form.units>1?"s":""}
-                  <span className="mx-2 text-slate-400">·</span>{dayjs(form.date).format("D MMM")} {form.timeSlot}
+                  <span className="font-semibold inline-flex items-center gap-2">
+                    {form.service && <ServiceIcon id={form.service as ServiceId} className="w-4 h-4" />}
+                    {svc?.name}
+                  </span>
+                  <span className="mx-2 text-slate-400">-</span>{form.units} {t.units}
+                  <span className="mx-2 text-slate-400">-</span>{form.btu.toLocaleString()} BTU
+                  <span className="mx-2 text-slate-400">-</span>{dayjs(form.date).format("D MMM")} {form.timeSlot}
                 </div>
                 <span className="text-brand-600 font-bold text-lg">${total}</span>
               </div>
 
               {/* Method tabs */}
               <div className="flex gap-2 mb-5">
-                {([{id:"paypal" as PayMethod,label:"PayPal",logo:"🅿"},{id:"credit" as PayMethod,label:"Credit Card",logo:"💳"},{id:"debit" as PayMethod,label:"Debit Card",logo:"🏦"}] as const).map((m)=>(
+                {([{id:"paypal" as PayMethod,label:"PayPal",icon:Wallet},{id:"credit" as PayMethod,label:"Credit Card",icon:CreditCard},{id:"debit" as PayMethod,label:"Debit Card",icon:Banknote}] as const).map((m)=>(
                   <button key={m.id} onClick={()=>setPayMethod(m.id)}
                     className={`flex-1 flex flex-col items-center py-3 rounded-xl border-2 text-sm font-medium transition-all ${payMethod===m.id?"border-brand-500 bg-brand-50 text-brand-700":"border-slate-200 text-slate-500 hover:border-slate-300"}`}>
-                    <span className="text-xl mb-0.5">{m.logo}</span>
+                    <m.icon className="w-5 h-5 mb-1" />
                     <span className="text-xs">{m.label}</span>
                   </button>
                 ))}
@@ -352,7 +374,7 @@ export default function BookPage() {
                       className="w-full bg-[#ffc439] hover:bg-[#f0b429] text-[#003087] font-bold py-4 rounded-xl disabled:opacity-70 flex items-center justify-center gap-2 text-base">
                       {paypalLoading
                         ? <><svg className="animate-spin w-5 h-5" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>{t.connectingPaypal}</>
-                        : <><span className="text-xl">🅿</span> Pay ${total} with PayPal</>}
+                        : <><Wallet className="w-5 h-5" /> {t.payWithPaypal} ${total}</>}
                     </button>
                   </div>
                 </div>
@@ -366,7 +388,7 @@ export default function BookPage() {
                     style={{background:"linear-gradient(135deg,#c2520a 0%,#ea6c00 60%,#fb923c 100%)"}}>
                     <div className="absolute top-5 left-6 right-6 flex items-center justify-between">
                       <span className="text-white/80 text-sm font-semibold tracking-widest uppercase">{payMethod}</span>
-                      <span className="text-white font-bold text-lg">{cardBrand||"💳"}</span>
+                      <span className="text-white font-bold text-lg">{cardBrand || "CARD"}</span>
                     </div>
                     <div className="absolute top-16 left-6 right-6">
                       <p className="text-white font-mono text-xl tracking-[0.2em] font-bold">{card.number||"•••• •••• •••• ••••"}</p>

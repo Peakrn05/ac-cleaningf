@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth/AuthProvider";
 import { useLang, validateEmail } from "@/context/lang/LangProvider";
-import { Eye, EyeOff, CheckCircle } from "lucide-react";
+import { CheckCircle, Eye, EyeOff, Fan, User } from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -30,7 +30,9 @@ export default function LoginPage() {
     <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Link href="/" className="flex items-center justify-center gap-2 text-brand-600 font-bold text-xl mb-8">
-          <div className="bg-brand-600 text-white rounded-lg w-9 h-9 flex items-center justify-center font-black">❄</div>
+          <div className="bg-brand-600 text-white rounded-lg w-9 h-9 flex items-center justify-center">
+            <Fan className="w-5 h-5" />
+          </div>
           AirCare Pro
         </Link>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 animate-fade-in">
@@ -59,7 +61,7 @@ export default function LoginPage() {
                 placeholder={t.emailPlaceholder} />
               {emailErr && <p className="text-red-500 text-xs mt-1">{emailErr}</p>}
               {form.email&&!emailErr&&validateEmail(form.email)&&(
-                <p className="text-green-600 text-xs mt-1 flex items-center gap-1"><CheckCircle className="w-3 h-3"/>Valid email</p>
+                <p className="text-green-600 text-xs mt-1 flex items-center gap-1"><CheckCircle className="w-3 h-3"/>{t.validEmail}</p>
               )}
             </div>
             <div>
@@ -68,7 +70,7 @@ export default function LoginPage() {
                 <input type={showPw?"text":"password"} required value={form.password}
                   onChange={(e)=>setForm((f)=>({...f,password:e.target.value}))}
                   className="w-full border border-slate-300 rounded-xl px-4 py-3 pr-11 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                  placeholder="••••••••" />
+                  placeholder="Password" />
                 <button type="button" onClick={()=>setShowPw(!showPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
                   {showPw?<EyeOff className="w-5 h-5"/>:<Eye className="w-5 h-5"/>}
                 </button>
@@ -81,13 +83,13 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-5 pt-4 border-t border-slate-100 text-center">
-            <Link href="/book" className="block w-full py-3 border-2 border-brand-200 text-brand-600 font-semibold rounded-xl hover:bg-brand-50 transition-colors text-sm mb-3">
-              👤 {t.continueAsGuest}
+            <Link href="/book" className="flex items-center justify-center gap-2 w-full py-3 border-2 border-brand-200 text-brand-600 font-semibold rounded-xl hover:bg-brand-50 transition-colors text-sm mb-3">
+              <User className="w-4 h-4" /> {t.continueAsGuest}
             </Link>
             <p className="text-sm text-slate-500">{t.noAccount} <Link href="/register" className="text-brand-600 font-semibold hover:underline">{t.createOneFree}</Link></p>
           </div>
         </div>
-        <p className="text-center mt-4 text-sm"><Link href="/" className="text-slate-400 hover:text-brand-600">← {t.home}</Link></p>
+        <p className="text-center mt-4 text-sm"><Link href="/" className="text-slate-400 hover:text-brand-600">{t.home}</Link></p>
       </div>
     </div>
   );

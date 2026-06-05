@@ -5,26 +5,26 @@ import { ChevronDown } from "lucide-react";
 export interface Country { flag: string; name: string; dial: string; code: string; }
 
 export const COUNTRIES: Country[] = [
-  { flag: "🇹🇭", name: "Thailand",         dial: "+66", code: "TH" },
-  { flag: "🇺🇸", name: "United States",    dial: "+1",  code: "US" },
-  { flag: "🇬🇧", name: "United Kingdom",   dial: "+44", code: "GB" },
-  { flag: "🇦🇺", name: "Australia",        dial: "+61", code: "AU" },
-  { flag: "🇸🇬", name: "Singapore",        dial: "+65", code: "SG" },
-  { flag: "🇲🇾", name: "Malaysia",         dial: "+60", code: "MY" },
-  { flag: "🇯🇵", name: "Japan",            dial: "+81", code: "JP" },
-  { flag: "🇨🇳", name: "China",            dial: "+86", code: "CN" },
-  { flag: "🇰🇷", name: "South Korea",      dial: "+82", code: "KR" },
-  { flag: "🇮🇳", name: "India",            dial: "+91", code: "IN" },
-  { flag: "🇩🇪", name: "Germany",          dial: "+49", code: "DE" },
-  { flag: "🇫🇷", name: "France",           dial: "+33", code: "FR" },
-  { flag: "🇨🇦", name: "Canada",           dial: "+1",  code: "CA" },
-  { flag: "🇦🇪", name: "UAE",              dial: "+971",code: "AE" },
-  { flag: "🇸🇦", name: "Saudi Arabia",     dial: "+966",code: "SA" },
-  { flag: "🇵🇭", name: "Philippines",      dial: "+63", code: "PH" },
-  { flag: "🇮🇩", name: "Indonesia",        dial: "+62", code: "ID" },
-  { flag: "🇻🇳", name: "Vietnam",          dial: "+84", code: "VN" },
-  { flag: "🇧🇷", name: "Brazil",           dial: "+55", code: "BR" },
-  { flag: "🇳🇿", name: "New Zealand",      dial: "+64", code: "NZ" },
+  { flag: "TH", name: "Thailand",         dial: "+66", code: "TH" },
+  { flag: "US", name: "United States",    dial: "+1",  code: "US" },
+  { flag: "GB", name: "United Kingdom",   dial: "+44", code: "GB" },
+  { flag: "AU", name: "Australia",        dial: "+61", code: "AU" },
+  { flag: "SG", name: "Singapore",        dial: "+65", code: "SG" },
+  { flag: "MY", name: "Malaysia",         dial: "+60", code: "MY" },
+  { flag: "JP", name: "Japan",            dial: "+81", code: "JP" },
+  { flag: "CN", name: "China",            dial: "+86", code: "CN" },
+  { flag: "KR", name: "South Korea",      dial: "+82", code: "KR" },
+  { flag: "IN", name: "India",            dial: "+91", code: "IN" },
+  { flag: "DE", name: "Germany",          dial: "+49", code: "DE" },
+  { flag: "FR", name: "France",           dial: "+33", code: "FR" },
+  { flag: "CA", name: "Canada",           dial: "+1",  code: "CA" },
+  { flag: "AE", name: "UAE",              dial: "+971",code: "AE" },
+  { flag: "SA", name: "Saudi Arabia",     dial: "+966",code: "SA" },
+  { flag: "PH", name: "Philippines",      dial: "+63", code: "PH" },
+  { flag: "ID", name: "Indonesia",        dial: "+62", code: "ID" },
+  { flag: "VN", name: "Vietnam",          dial: "+84", code: "VN" },
+  { flag: "BR", name: "Brazil",           dial: "+55", code: "BR" },
+  { flag: "NZ", name: "New Zealand",      dial: "+64", code: "NZ" },
 ];
 
 interface Props {
@@ -78,7 +78,7 @@ export default function PhoneInput({ value, onChange, placeholder = "000 000 000
         {/* Country selector */}
         <button type="button" onClick={() => setOpen(!open)}
           className="flex items-center gap-1.5 px-3 py-3 bg-slate-50 border border-r-0 border-slate-300 rounded-l-xl text-sm hover:bg-slate-100 transition-colors whitespace-nowrap">
-          <span className="text-lg leading-none">{country.flag}</span>
+          <span className="text-[11px] font-bold leading-none text-slate-500">{country.flag}</span>
           <span className="text-slate-600 font-mono text-xs">{country.dial}</span>
           <ChevronDown className="w-3 h-3 text-slate-400" />
         </button>
@@ -106,7 +106,7 @@ export default function PhoneInput({ value, onChange, placeholder = "000 000 000
                   className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-brand-50 transition-colors ${
                     country.code === c.code ? "bg-brand-50 text-brand-700 font-semibold" : "text-slate-700"
                   }`}>
-                  <span className="text-xl">{c.flag}</span>
+                  <span className="w-6 text-[11px] font-bold text-slate-500">{c.flag}</span>
                   <span className="flex-1 truncate">{c.name}</span>
                   <span className="text-slate-400 font-mono text-xs shrink-0">{c.dial}</span>
                 </button>

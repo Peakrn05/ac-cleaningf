@@ -6,6 +6,7 @@ interface BookingCtx {
   bookings: Booking[];
   addBooking: (b: Omit<Booking, "id" | "createdAt">) => Booking;
   updateStatus: (id: string, status: BookingStatus) => void;
+  updateSchedule: (id: string, date: string, timeSlot: string) => void;
   getUserBookings: (userId: string) => Booking[];
 }
 
@@ -15,7 +16,12 @@ const KEY = "ac-bookings-v1";
 export function BookingProvider({ children }: { children: ReactNode }) {
   const [bookings, setBookings] = useState<Booking[]>([]);
 
-  useEffect(() => { try { const raw = localStorage.getItem(KEY); if (raw) setBookings(JSON.parse(raw)); } catch {} }, []);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) setBookings(JSON.parse(raw).map((b: Booking) => ({ ...b, btu: b.btu ?? 5000 })));
+    } catch {}
+  }, []);
   useEffect(() => { localStorage.setItem(KEY, JSON.stringify(bookings)); }, [bookings]);
 
   const addBooking = useCallback((data: Omit<Booking, "id" | "createdAt">): Booking => {
@@ -27,9 +33,13 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
   }, []);
 
+  const updateSchedule = useCallback((id: string, date: string, timeSlot: string) => {
+    setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, date, timeSlot } : b)));
+  }, []);
+
   const getUserBookings = useCallback((userId: string) => bookings.filter((b) => b.userId === userId), [bookings]);
 
-  return <Ctx.Provider value={{ bookings, addBooking, updateStatus, getUserBookings }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ bookings, addBooking, updateStatus, updateSchedule, getUserBookings }}>{children}</Ctx.Provider>;
 }
 
 export const useBooking = () => {
