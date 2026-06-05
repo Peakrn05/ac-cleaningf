@@ -72,6 +72,13 @@ function matchesAcType(serviceId: string, acType: AcType) {
   return true;
 }
 
+function priceLabelToId(label: string): PriceRangeId {
+  if (label.startsWith("Under")) return "under-40";
+  if (label.startsWith("Over")) return "over-100";
+  if (label.includes("100")) return "70-100";
+  return "40-70";
+}
+
 function StarRow({ stars, count }: { stars: number; count: number }) {
   return (
     <div className="flex items-center gap-1">
@@ -215,7 +222,12 @@ export default function LandingPage() {
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Price Range</p>
                 {["Under $40", "$40–$70", "$70–$100", "Over $100"].map((r) => (
                   <label key={r} className="flex items-center gap-2 py-1 cursor-pointer">
-                    <input type="checkbox" className="accent-brand-600" />
+                    <input
+                      type="checkbox"
+                      className="accent-brand-600"
+                      checked={draftFilters.priceRanges.includes(priceLabelToId(r))}
+                      onChange={() => togglePriceRange(priceLabelToId(r))}
+                    />
                     <span className="text-sm text-slate-700">{r}</span>
                   </label>
                 ))}
@@ -223,9 +235,15 @@ export default function LandingPage() {
 
               <div>
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Rating</p>
-                {["4.5+", "4.0+", "3.5+"].map((r) => (
+                {RATING_FILTERS.map((r) => (
                   <label key={r} className="flex items-center gap-2 py-1 cursor-pointer">
-                    <input type="radio" name="rating" className="accent-brand-600" />
+                    <input
+                      type="radio"
+                      name="rating"
+                      className="accent-brand-600"
+                      checked={draftFilters.minRating === r}
+                      onChange={() => setDraftFilters((filters) => ({ ...filters, minRating: r }))}
+                    />
                     <div className="flex items-center gap-1">
                       <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
                       <span className="text-sm text-slate-700">{r}</span>
@@ -234,10 +252,12 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              <Link href="/book"
+              <button
+                type="button"
+                onClick={applyFilters}
                 className="mt-5 block w-full text-center bg-brand-600 text-white font-bold py-2.5 rounded-xl hover:bg-brand-700 transition-colors text-sm">
                 Apply Filters
-              </Link>
+              </button>
             </div>
           </aside>
 
@@ -246,7 +266,7 @@ export default function LandingPage() {
             {/* Sort bar */}
             <div className="flex items-center justify-between bg-white border border-slate-200 rounded-xl px-4 py-3 mb-4">
               <p className="text-sm text-slate-600">
-                <span className="font-bold text-slate-800">{SERVICES.length}</span> services found
+                <span className="font-bold text-slate-800">{filteredServices.length}</span> services found
               </p>
               <div className="flex items-center gap-2 text-sm">
                 <span className="text-slate-500 hidden sm:inline">Sort by:</span>
@@ -261,7 +281,7 @@ export default function LandingPage() {
 
             {/* Service grid — product card style */}
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {SERVICES.map((s) => {
+              {filteredServices.map((s) => {
                 const r = RATING_MAP[s.id];
                 return (
                   <div key={s.id} className="bg-white border border-slate-200 rounded-2xl overflow-hidden hover:shadow-md hover:border-brand-300 transition-all group flex flex-col">
