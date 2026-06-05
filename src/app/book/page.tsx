@@ -310,7 +310,7 @@ export default function BookPage() {
                 {[[t.service, svc?.name ?? ""], [t.units, String(form.units)], [t.btuCapacity, `${form.btu.toLocaleString()} BTU`], [t.date, dayjs(form.date).format("dddd, D MMMM YYYY")], [t.time, form.timeSlot],
                   ["Name",form.name],["Email",form.email],["Phone",form.phone||"—"],["Address",form.address],
                   ...(form.notes?[["Notes",form.notes]]:[])].map(([k,v])=>(
-                  <div key={k} className="flex justify-between py-2.5 border-b border-slate-100 text-sm">
+                  <div key={k} className="flex justify-between py-2.5 border-b border-slate-100 text-sm break-all">
                     <span className="text-slate-500 font-medium shrink-0">{k}</span>
                     <span className="text-slate-800 text-right ml-4">{v}</span>
                   </div>
