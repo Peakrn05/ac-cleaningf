@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/common/Navbar";
 import { SERVICES } from "@/types/app/booking";

@@ -7,16 +7,15 @@
 body {
   background: #f1f5f9;
   color: #0f172a;
-  font-family: "Times New Roman", Times, serif;
+  font-family: var(--font-lato), Arial, sans-serif;
 }
 
-/* Keep UI controls in system sans-serif for readability */
 input, select, textarea, button {
-  font-family: "Times New Roman", Times, serif;
+  font-family: var(--font-lato), Arial, sans-serif;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: "Times New Roman", Times, serif;
+  font-family: var(--font-lato), Arial, sans-serif;
   font-weight: 700;
 }
 
